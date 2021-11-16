@@ -1,4 +1,5 @@
 # simple-images-to-pdf-for-kindle
-Manga images usually too big to use on kindle, script make them manageble size for me old kindle, also make them pdf's just to be nice to the ol' machine
+Manga pages are usually too large to use on my old kindle. This script compresses them so they will fit and be more manageble by reducing resolution, doing jpg compression and making it black and white.  
 
-The file goal is 800x600 black and white image with 80% jpeg compression.
+The script has input support for:  .png and .jpg
+The script has output support for: .pdf and .cbz
