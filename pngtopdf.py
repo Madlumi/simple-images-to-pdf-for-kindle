@@ -5,18 +5,6 @@ import re
 import shutil
 
 
-#output parameters
-qual=80
-xo=600
-yo=800
-
-#folders
-iFol=r'input file'
-oF=r'output folder'
-oName=r'output name'
-tFol=r'temporay file folder'
-pre='image'
-
 
 
 def tryint(s):
@@ -43,17 +31,21 @@ def append_id(filename,i):
 
     return a+i+b
 
-#todo split pages?
+#copy and compress to new dimensions
 def CopyComp(file,out, dim):
+    #load an image
     img = Image.open(file)
-    
+
+    #Converts into greyscale
     #L = greysacle, RGB = rgb
     if not img.mode == 'L':
       img = img.convert('L')
     
+    #save image
     width, height = img.size
     if(width>height):
-        #spliterino
+        #split wide images into two
+
         i1 = img.crop([0,0,width/2,height])
         i2 = img.crop([width/2,0,width,height])
 
@@ -69,6 +61,8 @@ def CopyComp(file,out, dim):
         img.thumbnail((dim[0],dim[1]),Image.ANTIALIAS)
         img.save(out, quality=dim[2])
 
+
+#convert to pdf
 def pdfify(path, opath):
     il=[]
     ia=None
@@ -81,62 +75,115 @@ def pdfify(path, opath):
     print(ia)
     #imagelist = [im2,im3,im4]
     ia.save(opath,save_all=True,  append_images=il)
-    
+#convert to zip
+def zipify(path, opath):
+    shutil.make_archive(opath, 'zip', path)
+    os.rename(opath+".zip", opath)
+
+
+
+#clear tmp files
 def cleartmp(f):
     shutil.rmtree(f)
     if not os.path.exists(f):
         os.makedirs(f)
 
+###todo do the ___main___ whatever thingies
 
 
-oFol= oF+'\\'+oName+".pdf"
-if not os.path.exists(tFol):
-    os.makedirs(tFol)
-if not os.path.exists(oFol):
-    os.makedirs(oFol)
+def PngtoPdf(iFolder,oFolder,name,qual,xo,yo,outFormat):
 
-iii = [x[0] for x in os.walk(iFol)]
-sort_nicely(iii)
-
-i = 0
-pdfi=1
+    ###todo validate input
 
 
 
 
-cleartmp(tFol)
-print("----------------------")
-print("<          start     >")
-print(" ")
-print("    compressing...   >")
+    #temp files
+    tFolder=oFolder+"/tmp"
+    pre='image'
+
+    #make sure tmp and output folders exist
+    if not os.path.exists(tFolder):
+        os.makedirs(tFolder)
+    if not os.path.exists(oFolder):
+        os.makedirs(oFolder)
+
+    #list of folders 
+    folderList = [x[0] for x in os.walk(iFolder)]
+    sort_nicely(folderList)
+
+    i = 0
+    pdfi=1
 
 
-for f in iii:
-    #print(f)
-    for file in os.listdir(f):
-        if file.endswith(".png") or file.endswith(".jpg"):
-            fn= (pre+"_"+(f'{i:05d}')+".jpg")
-            print(os.path.join(f, file)+"  "+os.path.join(tFol, fn))
-            CopyComp(os.path.join(f, file),os.path.join(tFol, fn), [xo,yo,qual])            
-            i=i+1
-            
-            if(i>500):
-                oFol= oF+'\\'+oName+"_"+str(pdfi)+".pdf"
-                pdfify(tFol,oFol)
-                cleartmp(tFol)
-                i=0
-                pdfi+=1
+
+    #make sure the tmpfolder is empty
+    cleartmp(tFolder)
+
+    
+    print("----------------")
+    print("<    start     >")
+    print("----------------")
 
 
-oFol= oF+'\\'+oName+"_"+str(pdfi)+".pdf"
-print("----------------------")
-print("<size conversion done>")
-print(" ")
-print("<       pdfing...    >")
-pdfify(tFol,oFol)
+    #loop through folders
+    for f in folderList:
+        #print(f)
+        i=0;
+        #loop though the files in current folder
+        for file in os.listdir(f):
+            #check if filetype is an image
+            if file.endswith(".png") or file.endswith(".jpg"):
+                #filename
+                fn= (pre+"_"+(f'{i:05d}')+".jpg")
 
-print("----------------------")
-print("<clearing tmp files  >")
-print(" ")
+                #make filename use subfolder
+                
+                #print(os.path.join(f, file)+"  "+os.path.join(tFolder, fn))
 
-cleartmp(tFol)
+                CopyComp(os.path.join(f, file),os.path.join(tFolder, fn), [xo,yo,qual])            
+                i=i+1
+                
+        fn = os.path.basename(os.path.normpath(f))        
+        oF=oFolder+"/"+fn+"."+outFormat
+        if(i>0):
+            print(oF)
+            if(outFormat=="pdf"):
+                pdfify(tFolder,oF)
+                cleartmp(tFolder)
+                
+            if(outFormat=="cbz"):
+                zipify(tFolder,oF)
+                cleartmp(tFolder)
+    print("----------------")
+    print("<    done      >")
+    print("----------------")
+
+
+
+if __name__ == "__main__":
+    #output parameters
+    qual=85
+    xo=600
+    yo=800
+    #format cbz, pdf
+    outFormat="cbz"
+     #folders
+    #input
+    iFol=r'C:\User\manga\input'
+    #output name
+    oName=r'test'
+    #output folder
+    oF=r'C:\User\manga\output'
+
+    PngtoPdf(iFol,oF,oName,qual,xo,yo, outFormat);
+
+
+
+
+
+
+
+
+    
+
